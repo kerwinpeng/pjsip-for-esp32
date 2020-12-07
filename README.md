@@ -26,8 +26,8 @@ When run the main demo, one should change the following macro definitions first 
 
   #define SIP_DOMAIN	"xx.xx.xx.xx"    // sip server ip address  
   #define SIP_PASSWD	"xxx"            // sip regiser password  
-  #define SIP_USER	"xxx"              // sip account name  
-  #define SIP_CALLEE  "xxx"            // callee account name  
+  #define SIP_USER	"xxx"              // sip account name, e.g. 10001  
+  #define SIP_CALLEE  "xxx"            // callee account name, e.g. 10002  
   #define SIP_PORT    "5070"           // sip port  
   #define SIP_TRANSPORT_TYPE PJSIP_TRANSPORT_TCP   // default sip transport type  
 
