@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "algorithm": "cpp",
+        "random": "cpp",
+        "typeindex": "c",
+        "typeinfo": "c",
+        "__locale": "c",
+        "functional": "c"
+    }
+}
