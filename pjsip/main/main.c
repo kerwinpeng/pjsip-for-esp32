@@ -1,5 +1,5 @@
 /* $Id$ */
-/* 
+/*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,13 +15,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /**
  * simple_pjsua.c
  *
- * This is a very simple but fully featured SIP user agent, with the 
+ * This is a very simple but fully featured SIP user agent, with the
  * following capabilities:
  *  - SIP registration
  *  - Making and receiving call
@@ -268,7 +268,7 @@ static int sip_call_cmd(int argc, char **argv)
 {
     printf("sip_call_cmd argv1=%s", argv[1]);
     pjsua_call_hangup_all();
-    
+
     return 0;
 }
 
@@ -280,6 +280,8 @@ void app_main()
     pthread_attr_t thread_attr;
     pthread_t sip_main_thread;
     int rc;
+
+    AUDIO_MEM_SHOW(TAG);
 
 	/* tcp/ip init */
 	esp_err_t err = nvs_flash_init();
@@ -314,7 +316,11 @@ void app_main()
     audio_board_handle_t board_handle = audio_board_init();
     audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_BOTH, AUDIO_HAL_CTRL_START);
 
+    AUDIO_MEM_SHOW(TAG);
+
     console_init();
+
+    AUDIO_MEM_SHOW(TAG);
 
     const esp_console_cmd_t cmd_sip_call = {
         .command = "call",

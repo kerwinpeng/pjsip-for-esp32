@@ -1298,6 +1298,7 @@ static void rebuffer(pjmedia_stream *stream,
     }
 }
 
+static pj_int16_t *zero_frame;
 
 /**
  * put_frame_imp()
@@ -1306,7 +1307,6 @@ static pj_status_t put_frame_imp( pjmedia_port *port,
 				  pjmedia_frame *frame )
 {
 	/* Zero audio frame samples */
- 	pj_int16_t *zero_frame = (pj_int16_t *)pj_malloc(sizeof(pj_int16_t) * (2 * 30 * 16000 / 1000));
     pjmedia_stream *stream = (pjmedia_stream*) port->port_data.pdata;
     pjmedia_channel *channel = stream->enc;
     pj_status_t status = 0;
@@ -1316,6 +1316,9 @@ static pj_status_t put_frame_imp( pjmedia_port *port,
     int rtphdrlen;
     int inc_timestamp = 0;
 
+	if (zero_frame == NULL) {
+		zero_frame = (pj_int16_t *)pj_malloc(sizeof(pj_int16_t) * (2 * 30 * 16000 / 1000));
+	}
 
 #if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA != 0
     /* If the interval since last sending packet is greater than
@@ -1878,13 +1881,13 @@ static void on_rx_rtp( pjmedia_tp_cb_param *param)
      */
     check_pt = (hdr->pt != stream->rx_event_pt) && PJMEDIA_STREAM_CHECK_RTP_PT;
     pjmedia_rtp_session_update2(&channel->rtp, hdr, &seq_st, check_pt);
-#if !PJMEDIA_STREAM_CHECK_RTP_PT 
+#if !PJMEDIA_STREAM_CHECK_RTP_PT
     if (!check_pt && hdr->pt != channel->rtp.out_pt &&
-	hdr->pt != stream->rx_event_pt) 
-    { 
-	seq_st.status.flag.badpt = 1; 
-    } 
-#endif 
+	hdr->pt != stream->rx_event_pt)
+    {
+	seq_st.status.flag.badpt = 1;
+    }
+#endif
     if (seq_st.status.value) {
 	TRC_  ((stream->port.info.name.ptr,
 		"RTP status: badpt=%d, badssrc=%d, dup=%d, "

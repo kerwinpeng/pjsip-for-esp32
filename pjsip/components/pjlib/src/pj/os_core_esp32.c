@@ -503,13 +503,13 @@ PJ_DEF(pj_status_t) pj_thread_create( pj_pool_t *pool,
     rec->proc = proc;
     rec->arg = arg;
     thread_attr.schedpolicy = policy;
-    thread_attr.stacksize = 30 * 1024;
+    thread_attr.stacksize = 20 * 1024;
     rc = pthread_create_static(&rec->thread, &thread_attr, thread_main, rec,
                 thread_name, 10, 1);
     if (rc != 0) {
 	return PJ_RETURN_OS_ERROR(rc);
     }
-    
+
     *ptr_thread = rec;
 
     PJ_LOG(6, (rec->obj_name, "Thread created"));
@@ -740,7 +740,7 @@ PJ_DEF(pj_status_t) pj_atomic_destroy( pj_atomic_t *atomic_var )
     pj_status_t status;
 
     PJ_ASSERT_RETURN(atomic_var, PJ_EINVAL);
-    
+
 #if PJ_HAS_THREADS
     status = pj_mutex_destroy( atomic_var->mutex );
     if (status == PJ_SUCCESS) {

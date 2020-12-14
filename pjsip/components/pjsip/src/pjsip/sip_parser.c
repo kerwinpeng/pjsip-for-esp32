@@ -1,5 +1,5 @@
 /* $Id$ */
-/* 
+/*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include <pjsip/sip_parser.h>
 #include <pjsip/sip_uri.h>
@@ -45,7 +45,7 @@
 #define ESCAPED		    "%"
 #define USER_UNRESERVED	    "&=+$,;?/"
 #define PASS		    "&=+$,"
-#define TOKEN		    "-.!%*_`'~+"   /* '=' was removed for parsing 
+#define TOKEN		    "-.!%*_`'~+"   /* '=' was removed for parsing
 					    * param */
 #define HOST		    "_-."
 #define HEX_DIGIT	    "abcdefABCDEF"
@@ -74,7 +74,8 @@ typedef struct handler_rec
     pjsip_parse_hdr_func *handler;
 } handler_rec;
 
-static handler_rec handler[PJSIP_MAX_HEADER_TYPES];
+// static handler_rec handler[PJSIP_MAX_HEADER_TYPES];
+static handler_rec *handler;
 static unsigned handler_count;
 static int parser_is_initialized;
 
@@ -109,50 +110,50 @@ static pjsip_parser_const_t pconst =
     { "rport", 5}	/* pjsip_RPORT_STR	*/
 };
 
-static pj_cis_buf_t cis_buf;
+static pj_cis_buf_t *cis_buf;
 
 /*
  * Forward decl.
  */
-static pjsip_msg *  int_parse_msg( pjsip_parse_ctx *ctx, 
+static pjsip_msg *  int_parse_msg( pjsip_parse_ctx *ctx,
 				   pjsip_parser_err_report *err_list);
-static void	    int_parse_param( pj_scanner *scanner, 
+static void	    int_parse_param( pj_scanner *scanner,
 				     pj_pool_t *pool,
-				     pj_str_t *pname, 
+				     pj_str_t *pname,
 				     pj_str_t *pvalue,
 				     unsigned option);
-static void	    int_parse_uri_param( pj_scanner *scanner, 
+static void	    int_parse_uri_param( pj_scanner *scanner,
 					 pj_pool_t *pool,
-					 pj_str_t *pname, 
+					 pj_str_t *pname,
 					 pj_str_t *pvalue,
 					 unsigned option);
 static void	    int_parse_hparam( pj_scanner *scanner,
 				      pj_pool_t *pool,
 				      pj_str_t *hname,
 				      pj_str_t *hvalue );
-static void         int_parse_req_line( pj_scanner *scanner, 
+static void         int_parse_req_line( pj_scanner *scanner,
 					pj_pool_t *pool,
 					pjsip_request_line *req_line);
 static int          int_is_next_user( pj_scanner *scanner);
-static void	    int_parse_status_line( pj_scanner *scanner, 
+static void	    int_parse_status_line( pj_scanner *scanner,
 					   pjsip_status_line *line);
-static void	    int_parse_user_pass( pj_scanner *scanner, 
+static void	    int_parse_user_pass( pj_scanner *scanner,
 					 pj_pool_t *pool,
-					 pj_str_t *user, 
+					 pj_str_t *user,
 					 pj_str_t *pass);
-static void	    int_parse_uri_host_port( pj_scanner *scanner, 
-					     pj_str_t *p_host, 
+static void	    int_parse_uri_host_port( pj_scanner *scanner,
+					     pj_str_t *p_host,
 					     int *p_port);
-static pjsip_uri *  int_parse_uri_or_name_addr( pj_scanner *scanner, 
-					        pj_pool_t *pool, 
+static pjsip_uri *  int_parse_uri_or_name_addr( pj_scanner *scanner,
+					        pj_pool_t *pool,
                                                 unsigned option);
-static void*	    int_parse_sip_url( pj_scanner *scanner, 
+static void*	    int_parse_sip_url( pj_scanner *scanner,
 				         pj_pool_t *pool,
 				         pj_bool_t parse_params);
 static pjsip_name_addr *
-                    int_parse_name_addr( pj_scanner *scanner, 
+                    int_parse_name_addr( pj_scanner *scanner,
 					 pj_pool_t *pool );
-static void*	    int_parse_other_uri(pj_scanner *scanner, 
+static void*	    int_parse_other_uri(pj_scanner *scanner,
 					pj_pool_t *pool,
 					pj_bool_t parse_params);
 static void	    parse_hdr_end( pj_scanner *scanner );
@@ -179,7 +180,7 @@ static pjsip_hdr*   parse_hdr_via( pjsip_parse_ctx *ctx );
 static pjsip_hdr*   parse_hdr_generic_string( pjsip_parse_ctx *ctx);
 
 /* Convert non NULL terminated string to integer. */
-static unsigned long pj_strtoul_mindigit(const pj_str_t *str, 
+static unsigned long pj_strtoul_mindigit(const pj_str_t *str,
                                          unsigned mindig)
 {
     unsigned long value;
@@ -200,7 +201,7 @@ static unsigned long pj_strtoul_mindigit(const pj_str_t *str,
 
 /* Get a token and unescape */
 PJ_INLINE(void) parser_get_and_unescape(pj_scanner *scanner, pj_pool_t *pool,
-					const pj_cis_t *spec, 
+					const pj_cis_t *spec,
 					const pj_cis_t *unesc_spec,
 					pj_str_t *token)
 {
@@ -253,7 +254,7 @@ static void on_str_parse_error(const pj_str_t *str, int rc)
 
 static void strtoi_validate(const pj_str_t *str, int min_val,
 			    int max_val, int *value)
-{ 
+{
     long retval;
     pj_status_t status;
 
@@ -284,9 +285,9 @@ PJ_DEF(const pjsip_parser_const_t*) pjsip_parser_const(void)
 }
 
 /* Concatenate unrecognized params into single string. */
-PJ_DEF(void) pjsip_concat_param_imp(pj_str_t *param, pj_pool_t *pool, 
-			     	    const pj_str_t *pname, 
-				    const pj_str_t *pvalue, 
+PJ_DEF(void) pjsip_concat_param_imp(pj_str_t *param, pj_pool_t *pool,
+			     	    const pj_str_t *pname,
+				    const pj_str_t *pvalue,
                              	    int sepchar)
 {
     char *new_param, *p;
@@ -294,7 +295,7 @@ PJ_DEF(void) pjsip_concat_param_imp(pj_str_t *param, pj_pool_t *pool,
 
     len = param->slen + pname->slen + pvalue->slen + 3;
     p = new_param = (char*) pj_pool_alloc(pool, len);
-    
+
     if (param->slen) {
 	pj_size_t old_len = param->slen;
 	pj_memcpy(p, param->ptr, old_len);
@@ -311,7 +312,7 @@ PJ_DEF(void) pjsip_concat_param_imp(pj_str_t *param, pj_pool_t *pool,
     }
 
     *p = '\0';
-    
+
     param->ptr = new_param;
     param->slen = p - new_param;
 }
@@ -325,28 +326,34 @@ static pj_status_t init_parser()
     /*
      * Init character input spec (cis)
      */
+    if (cis_buf == NULL) {
+        cis_buf = pj_calloc(1, sizeof(pj_cis_buf_t));
+    }
+    pj_cis_buf_init(cis_buf);
 
-    pj_cis_buf_init(&cis_buf);
+    if (handler == NULL) {
+        handler = pj_calloc(1, PJSIP_MAX_HEADER_TYPES * sizeof(handler_rec));
+    }
 
-    status = pj_cis_init(&cis_buf, &pconst.pjsip_DIGIT_SPEC);
+    status = pj_cis_init(cis_buf, &pconst.pjsip_DIGIT_SPEC);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_add_num(&pconst.pjsip_DIGIT_SPEC);
-    
-    status = pj_cis_init(&cis_buf, &pconst.pjsip_ALPHA_SPEC);
+
+    status = pj_cis_init(cis_buf, &pconst.pjsip_ALPHA_SPEC);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_add_alpha( &pconst.pjsip_ALPHA_SPEC );
-    
-    status = pj_cis_init(&cis_buf, &pconst.pjsip_ALNUM_SPEC);
+
+    status = pj_cis_init(cis_buf, &pconst.pjsip_ALNUM_SPEC);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_add_alpha( &pconst.pjsip_ALNUM_SPEC );
     pj_cis_add_num( &pconst.pjsip_ALNUM_SPEC );
 
-    status = pj_cis_init(&cis_buf, &pconst.pjsip_NOT_NEWLINE);
+    status = pj_cis_init(cis_buf, &pconst.pjsip_NOT_NEWLINE);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_add_str(&pconst.pjsip_NOT_NEWLINE, "\r\n");
     pj_cis_invert(&pconst.pjsip_NOT_NEWLINE);
 
-    status = pj_cis_init(&cis_buf, &pconst.pjsip_NOT_COMMA_OR_NEWLINE);
+    status = pj_cis_init(cis_buf, &pconst.pjsip_NOT_COMMA_OR_NEWLINE);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_add_str( &pconst.pjsip_NOT_COMMA_OR_NEWLINE, ",\r\n");
     pj_cis_invert(&pconst.pjsip_NOT_COMMA_OR_NEWLINE);
@@ -415,12 +422,12 @@ static pj_status_t init_parser()
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_del_str( &pconst.pjsip_PASSWD_SPEC_ESC, ESCAPED);
 
-    status = pj_cis_init(&cis_buf, &pconst.pjsip_PROBE_USER_HOST_SPEC);
+    status = pj_cis_init(cis_buf, &pconst.pjsip_PROBE_USER_HOST_SPEC);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_add_str( &pconst.pjsip_PROBE_USER_HOST_SPEC, "@ \n>");
     pj_cis_invert( &pconst.pjsip_PROBE_USER_HOST_SPEC );
 
-    status = pj_cis_init(&cis_buf, &pconst.pjsip_DISPLAY_SPEC);
+    status = pj_cis_init(cis_buf, &pconst.pjsip_DISPLAY_SPEC);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
     pj_cis_add_str( &pconst.pjsip_DISPLAY_SPEC, ":\r\n<");
     pj_cis_invert(&pconst.pjsip_DISPLAY_SPEC);
@@ -455,11 +462,11 @@ static pj_status_t init_parser()
     status = pjsip_register_hdr_parser( "Contact", "m", &parse_hdr_contact);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    status = pjsip_register_hdr_parser( "Content-Length", "l", 
+    status = pjsip_register_hdr_parser( "Content-Length", "l",
                                         &parse_hdr_content_len);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    status = pjsip_register_hdr_parser( "Content-Type", "c", 
+    status = pjsip_register_hdr_parser( "Content-Type", "c",
                                         &parse_hdr_content_type);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
@@ -472,11 +479,11 @@ static pj_status_t init_parser()
     status = pjsip_register_hdr_parser( "From", "f", &parse_hdr_from);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    status = pjsip_register_hdr_parser( "Max-Forwards", NULL, 
+    status = pjsip_register_hdr_parser( "Max-Forwards", NULL,
                                         &parse_hdr_max_forwards);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    status = pjsip_register_hdr_parser( "Min-Expires", NULL, 
+    status = pjsip_register_hdr_parser( "Min-Expires", NULL,
                                         &parse_hdr_min_expires);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
@@ -489,31 +496,31 @@ static pj_status_t init_parser()
     status = pjsip_register_hdr_parser( "Require", NULL, &parse_hdr_require);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    status = pjsip_register_hdr_parser( "Retry-After", NULL, 
+    status = pjsip_register_hdr_parser( "Retry-After", NULL,
                                         &parse_hdr_retry_after);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    status = pjsip_register_hdr_parser( "Supported", "k", 
+    status = pjsip_register_hdr_parser( "Supported", "k",
                                         &parse_hdr_supported);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     status = pjsip_register_hdr_parser( "To", "t", &parse_hdr_to);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    status = pjsip_register_hdr_parser( "Unsupported", NULL, 
+    status = pjsip_register_hdr_parser( "Unsupported", NULL,
                                         &parse_hdr_unsupported);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
     status = pjsip_register_hdr_parser( "Via", "v", &parse_hdr_via);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 
-    /* 
-     * Register auth parser. 
+    /*
+     * Register auth parser.
      */
 
     status = pjsip_auth_init_parser();
 
-    
+
     return status;
 }
 
@@ -527,7 +534,7 @@ void init_sip_parser(void)
 }
 
 void deinit_sip_parser(void)
-{   
+{
     pj_enter_critical_section();
     if (--parser_is_initialized == 0) {
         /* Clear header handlers */
@@ -536,7 +543,7 @@ void deinit_sip_parser(void)
 
         /* Clear URI handlers */
         pj_bzero(uri_handler, sizeof(uri_handler));
-        uri_handler_count = 0; 
+        uri_handler_count = 0;
     }
     pj_leave_critical_section();
 }
@@ -546,8 +553,8 @@ void deinit_sip_parser(void)
  * - <0 if handler is 'less' than the header name.
  * - >0 if handler is 'greater' than header name.
  */
-PJ_INLINE(int) compare_handler( const handler_rec *r1, 
-				const char *name, 
+PJ_INLINE(int) compare_handler( const handler_rec *r1,
+				const char *name,
 				pj_size_t name_len,
 				pj_uint32_t hash )
 {
@@ -572,15 +579,15 @@ PJ_INLINE(int) compare_handler( const handler_rec *r1,
 }
 
 /* Register one handler for one header name. */
-static pj_status_t int_register_parser( const char *name, 
+static pj_status_t int_register_parser( const char *name,
                                         pjsip_parse_hdr_func *fptr )
 {
     unsigned	pos;
     handler_rec rec;
 
     if (handler_count >= PJ_ARRAY_SIZE(handler)) {
-	pj_assert(!"Too many handlers!");
-	return PJ_ETOOMANY;
+	    // pj_assert(!"Too many handlers!");
+	    // return PJ_ETOOMANY;
     }
 
     /* Initialize temporary handler. */
@@ -600,7 +607,7 @@ static pj_status_t int_register_parser( const char *name,
     /* Get the pos to insert the new handler. */
     for (pos=0; pos < handler_count; ++pos) {
 	int d;
-	d = compare_handler(&handler[pos], rec.hname, rec.hname_len, 
+	d = compare_handler(&handler[pos], rec.hname, rec.hname_len,
                             rec.hname_hash);
 	if (d == 0) {
 	    pj_assert(0);
@@ -613,7 +620,7 @@ static pj_status_t int_register_parser( const char *name,
 
     /* Shift handlers. */
     if (pos != handler_count) {
-	pj_memmove( &handler[pos+1], &handler[pos], 
+	pj_memmove( &handler[pos+1], &handler[pos],
                     (handler_count-pos)*sizeof(handler_rec));
     }
     /* Add new handler. */
@@ -659,12 +666,12 @@ PJ_DEF(pj_status_t) pjsip_register_hdr_parser( const char *hname,
     if (status != PJ_SUCCESS) {
 	return status;
     }
-    
+
 
     /* Register the shortname version of the name */
     if (hshortname) {
         status = int_register_parser(hshortname, fptr);
-        if (status != PJ_SUCCESS) 
+        if (status != PJ_SUCCESS)
 	    return status;
     }
     return PJ_SUCCESS;
@@ -672,7 +679,7 @@ PJ_DEF(pj_status_t) pjsip_register_hdr_parser( const char *hname,
 
 
 /* Find handler to parse the header name. */
-static pjsip_parse_hdr_func * find_handler_imp(pj_uint32_t  hash, 
+static pjsip_parse_hdr_func * find_handler_imp(pj_uint32_t  hash,
 					       const pj_str_t *hname)
 {
     handler_rec *first;
@@ -758,7 +765,7 @@ PJ_DEF(pj_status_t) pjsip_register_uri_parser( char *scheme,
 }
 
 /* Public function to parse SIP message. */
-PJ_DEF(pjsip_msg*) pjsip_parse_msg( pj_pool_t *pool, 
+PJ_DEF(pjsip_msg*) pjsip_parse_msg( pj_pool_t *pool,
                                     char *buf, pj_size_t size,
 				    pjsip_parser_err_report *err_list)
 {
@@ -766,7 +773,7 @@ PJ_DEF(pjsip_msg*) pjsip_parse_msg( pj_pool_t *pool,
     pj_scanner scanner;
     pjsip_parse_ctx context;
 
-    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER, 
+    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER,
                  &on_syntax_error);
 
     context.scanner = &scanner;
@@ -786,7 +793,7 @@ PJ_DEF(pjsip_msg *) pjsip_parse_rdata( char *buf, pj_size_t size,
     pj_scanner scanner;
     pjsip_parse_ctx context;
 
-    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER, 
+    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER,
                  &on_syntax_error);
 
     context.scanner = &scanner;
@@ -800,7 +807,7 @@ PJ_DEF(pjsip_msg *) pjsip_parse_rdata( char *buf, pj_size_t size,
 }
 
 /* Determine if a message has been received. */
-PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size, 
+PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size,
 				  pj_bool_t is_datagram, pj_size_t *msg_size)
 {
 #if PJ_HAS_TCP
@@ -812,28 +819,28 @@ PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size,
     pj_str_t cur_msg;
     pj_status_t status = PJSIP_EMISSINGHDR;
     pj_str_t end_hdr = { "\n\r\n", 3};
-    
+
 
     *msg_size = size;
 
     /* For datagram, the whole datagram IS the message. */
     if (is_datagram) {
-        
+
 	    return PJ_SUCCESS;
     }
 
 
-    /* Find the end of header area by finding an empty line. 
+    /* Find the end of header area by finding an empty line.
      * Don't use plain strstr() since we want to be able to handle
      * NULL character in the message
      */
     cur_msg.ptr = (char*)buf; cur_msg.slen = size;
     pos = pj_strstr(&cur_msg, &end_hdr);
     if (pos == NULL) {
-        
+
 	    return PJSIP_EPARTIALMSG;
     }
- 
+
     hdr_end = pos+1;
     body_start = pos+3;
 
@@ -841,9 +848,9 @@ PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size,
     line = pj_strchr(&cur_msg, '\n');
     while (line && line < hdr_end) {
 	++line;
-	if ( ((*line=='C' || *line=='c') && 
+	if ( ((*line=='C' || *line=='c') &&
               strnicmp_alnum(line, "Content-Length", 14) == 0) ||
-	     ((*line=='l' || *line=='L') && 
+	     ((*line=='l' || *line=='L') &&
               (*(line+1)==' ' || *(line+1)=='\t' || *(line+1)==':')))
 	{
 	    /* Try to parse the header. */
@@ -852,8 +859,8 @@ PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size,
 
 	    /* The buffer passed to the scanner is not NULL terminated,
              * but should be safe. See ticket #2063.
-	     */ 
-	    pj_scan_init(&scanner, (char*)line, hdr_end-line, 
+	     */
+	    pj_scan_init(&scanner, (char*)line, hdr_end-line,
 			 PJ_SCAN_AUTOSKIP_WS_HEADER, &on_syntax_error);
 
 	    PJ_TRY {
@@ -867,7 +874,7 @@ PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size,
 
 		/* Get colon */
 		if (pj_scan_get_char(&scanner) != ':') {
-            
+
 		    PJ_THROW(-1);
 		}
 
@@ -907,7 +914,7 @@ PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size,
 
     /* Found Content-Length? */
     if (content_length == -1) {
-        
+
 	    return status;
     }
 
@@ -923,7 +930,7 @@ PJ_DEF(pj_status_t) pjsip_find_msg( const char *buf, pj_size_t size,
 }
 
 /* Public function to parse URI */
-PJ_DEF(pjsip_uri*) pjsip_parse_uri( pj_pool_t *pool, 
+PJ_DEF(pjsip_uri*) pjsip_parse_uri( pj_pool_t *pool,
 					 char *buf, pj_size_t size,
 					 unsigned option)
 {
@@ -933,7 +940,7 @@ PJ_DEF(pjsip_uri*) pjsip_parse_uri( pj_pool_t *pool,
 
     pj_scan_init(&scanner, buf, size, 0, &on_syntax_error);
 
-    PJ_TRY 
+    PJ_TRY
     {
 	    uri = int_parse_uri_or_name_addr(&scanner, pool, option);
     }
@@ -959,7 +966,7 @@ static void parse_sip_version(pj_scanner *scanner)
     pj_str_t SIP = { "SIP", 3 };
     pj_str_t V2 = { "2.0", 3 };
     pj_str_t sip, version;
-    
+
     pj_scan_get( scanner, &pconst.pjsip_ALPHA_SPEC, &sip);
     if (pj_scan_get_char(scanner) != '/')
 	on_syntax_error(scanner);
@@ -981,7 +988,7 @@ static pj_bool_t is_next_sip_version(pj_scanner *scanner)
      * request and the method is "SIP"!
      */
 
-    
+
     return c && (c=='/' || c==' ' || c=='\t') && pj_stricmp(&sip, &SIP)==0;
 }
 
@@ -1004,7 +1011,7 @@ static pjsip_msg *int_parse_msg( pjsip_parse_ctx *ctx,
     parsing_headers = PJ_FALSE;
 
 retry_parse:
-    PJ_TRY 
+    PJ_TRY
     {
 	if (parsing_headers)
 	    goto parse_headers;
@@ -1020,7 +1027,7 @@ retry_parse:
 	 */
 	if (pj_scan_is_eof(scanner))
     {
-        
+
 	    return NULL;
     }
 
@@ -1045,17 +1052,17 @@ parse_headers:
 	     * Ref: PROTOS #2412
 	     */
 	    hname.slen = 0;
-	    
+
 	    /* Get hname. */
 	    pj_scan_get( scanner, &pconst.pjsip_TOKEN_SPEC, &hname);
 	    if (pj_scan_get_char( scanner ) != ':') {
-            
+
 		PJ_THROW(-1);
 	    }
-	    
+
 	    /* Find handler. */
 	    func = find_handler(&hname);
-	    
+
 	    /* Call the handler if found.
 	     * If no handler is found, then treat the header as generic
 	     * hname/hvalue pair.
@@ -1069,8 +1076,8 @@ parse_headers:
 		 *  header. See http://trac.pjsip.org/repos/ticket/940
 		 */
 
-		/* Check if we've just parsed a Content-Type header. 
-		 * We will check for a message body if we've got Content-Type 
+		/* Check if we've just parsed a Content-Type header.
+		 * We will check for a message body if we've got Content-Type
 		 * header.
 		 */
 		if (hdr && hdr->type == PJSIP_H_CONTENT_TYPE) {
@@ -1081,7 +1088,7 @@ parse_headers:
 		hdr = parse_hdr_generic_string(ctx);
 		hdr->name = hdr->sname = hname;
 	    }
-	    
+
 	    /* Single parse of header line can produce multiple headers.
 	     * For example, if one Contact: header contains Contact list
 	     * separated by comma, then these Contacts will be split into
@@ -1090,10 +1097,10 @@ parse_headers:
 	     */
 	    if (hdr)
 		pj_list_insert_nodes_before(&msg->hdr, hdr);
-	    
+
 	    /* Parse until EOF or an empty line is found. */
 	} while (!pj_scan_is_eof(scanner) && !IS_NEWLINE(*scanner->curptr));
-	
+
 	parsing_headers = PJ_FALSE;
 
 	/* If empty line is found, eat it. */
@@ -1103,7 +1110,7 @@ parse_headers:
 	    }
 	}
 
-	/* If we have Content-Type header, treat the rest of the message 
+	/* If we have Content-Type header, treat the rest of the message
 	 * as body.
 	 */
 	if (ctype_hdr && scanner->curptr!=scanner->end) {
@@ -1131,14 +1138,14 @@ parse_headers:
 	    msg->body = body;
 	}
     }
-    PJ_CATCH_ANY 
+    PJ_CATCH_ANY
     {
-	/* Exception was thrown during parsing. 
-	 * Skip until newline, and parse next header. 
+	/* Exception was thrown during parsing.
+	 * Skip until newline, and parse next header.
 	 */
 	if (err_list) {
 	    pjsip_parser_err_report *err_info;
-	    
+
 	    err_info = PJ_POOL_ALLOC_T(pool, pjsip_parser_err_report);
 	    err_info->except_code = PJ_GET_EXCEPTION();
 	    err_info->line = scanner->line;
@@ -1152,10 +1159,10 @@ parse_headers:
 		err_info->hname = pj_str("Status Line");
 	    else
 		err_info->hname.slen = 0;
-	    
+
 	    pj_list_insert_before(err_list, err_info);
 	}
-	
+
 	if (parsing_headers) {
 	    if (!pj_scan_is_eof(scanner)) {
 		/* Skip until next line.
@@ -1178,7 +1185,7 @@ parse_headers:
 	msg = NULL;
     }
     PJ_END;
-    
+
     return msg;
 }
 
@@ -1230,10 +1237,10 @@ PJ_DEF(void) pjsip_parse_param_imp(pj_scanner *scanner, pj_pool_t *pool,
 			     	   pj_str_t *pname, pj_str_t *pvalue,
 			     	   unsigned option)
 {
-    
+
     parse_param_imp(scanner, pool, pname, pvalue, &pconst.pjsip_TOKEN_SPEC,
 		    &pconst.pjsip_TOKEN_SPEC_ESC, option);
-    
+
 }
 
 
@@ -1268,7 +1275,7 @@ static void int_parse_uri_param( pj_scanner *scanner, pj_pool_t *pool,
     pj_scan_get_char(scanner);
 
     /* Get pname and optionally pvalue */
-    pjsip_parse_uri_param_imp(scanner, pool, pname, pvalue, 
+    pjsip_parse_uri_param_imp(scanner, pool, pname, pvalue,
 			      option);
 }
 
@@ -1281,7 +1288,7 @@ static void int_parse_hparam( pj_scanner *scanner, pj_pool_t *pool,
     pj_scan_get_char(scanner);
 
     /* hname */
-    parser_get_and_unescape(scanner, pool, &pconst.pjsip_HDR_CHAR_SPEC, 
+    parser_get_and_unescape(scanner, pool, &pconst.pjsip_HDR_CHAR_SPEC,
 			    &pconst.pjsip_HDR_CHAR_SPEC_ESC, hname);
 
     /* Init hvalue */
@@ -1291,7 +1298,7 @@ static void int_parse_hparam( pj_scanner *scanner, pj_pool_t *pool,
     /* pvalue, if any */
     if (*scanner->curptr == '=') {
 	pj_scan_get_char(scanner);
-	if (!pj_scan_is_eof(scanner) && 
+	if (!pj_scan_is_eof(scanner) &&
 	    pj_cis_match(&pconst.pjsip_HDR_CHAR_SPEC, *scanner->curptr))
 	{
 	    parser_get_and_unescape(scanner, pool, &pconst.pjsip_HDR_CHAR_SPEC,
@@ -1316,7 +1323,7 @@ static void int_parse_host(pj_scanner *scanner, pj_str_t *host)
 }
 
 /* Parse host:port in URI. */
-static void int_parse_uri_host_port( pj_scanner *scanner, 
+static void int_parse_uri_host_port( pj_scanner *scanner,
 				     pj_str_t *host, int *p_port)
 {
     int_parse_host(scanner, host);
@@ -1353,7 +1360,7 @@ static int int_is_next_user(pj_scanner *scanner)
 static void int_parse_user_pass( pj_scanner *scanner, pj_pool_t *pool,
 				 pj_str_t *user, pj_str_t *pass)
 {
-    parser_get_and_unescape(scanner, pool, &pconst.pjsip_USER_SPEC_LENIENT, 
+    parser_get_and_unescape(scanner, pool, &pconst.pjsip_USER_SPEC_LENIENT,
 			    &pconst.pjsip_USER_SPEC_LENIENT_ESC, user);
 
     if ( *scanner->curptr == ':') {
@@ -1392,12 +1399,12 @@ static pjsip_uri *int_parse_uri_or_name_addr( pj_scanner *scanner, pj_pool_t *po
 
 	    if (func == NULL) {
 		/* Unsupported URI scheme */
-        
+
 		PJ_THROW(-1);
 	    }
 
 	    uri = (pjsip_uri*)
-	    	  (*func)(scanner, pool, 
+	    	  (*func)(scanner, pool,
 			  (opt & PJSIP_PARSE_URI_IN_FROM_TO_HDR)==0);
 
 
@@ -1417,12 +1424,12 @@ static pjsip_uri *int_parse_uri_or_name_addr( pj_scanner *scanner, pj_pool_t *po
 	    uri = (pjsip_uri*)name_addr;
 	}
     }
-    
+
     return uri;
 }
 
 /* Parse URI. */
-static pjsip_uri *int_parse_uri(pj_scanner *scanner, pj_pool_t *pool, 
+static pjsip_uri *int_parse_uri(pj_scanner *scanner, pj_pool_t *pool,
 				pj_bool_t parse_params)
 {
     /* Bug:
@@ -1436,7 +1443,7 @@ static pjsip_uri *int_parse_uri(pj_scanner *scanner, pj_pool_t *pool,
 
 	/* Get scheme. */
 	colon = pj_scan_peek(scanner, &pconst.pjsip_TOKEN_SPEC, &scheme);
-    
+
 	if (colon != ':') {
 	    PJ_THROW(-1);
 	}
@@ -1456,10 +1463,10 @@ static pjsip_uri *int_parse_uri(pj_scanner *scanner, pj_pool_t *pool,
     */
 }
 
-/* Parse "sip:" and "sips:" URI. 
+/* Parse "sip:" and "sips:" URI.
  * This actually returns (pjsip_sip_uri*) type,
  */
-static void* int_parse_sip_url( pj_scanner *scanner, 
+static void* int_parse_sip_url( pj_scanner *scanner,
 				pj_pool_t *pool,
 				pj_bool_t parse_params)
 {
@@ -1472,7 +1479,7 @@ static void* int_parse_sip_url( pj_scanner *scanner,
     pj_scan_get(scanner, &pconst.pjsip_TOKEN_SPEC, &scheme);
     colon = pj_scan_get_char(scanner);
     if (colon != ':') {
-        
+
 	PJ_THROW(-1);
     }
 
@@ -1483,7 +1490,7 @@ static void* int_parse_sip_url( pj_scanner *scanner,
 	url = pjsip_sip_uri_create(pool, 1);
 
     } else {
-        
+
 	    PJ_THROW(-1);
 	/* should not reach here */
 	UNREACHED({
@@ -1545,12 +1552,12 @@ static void* int_parse_sip_url( pj_scanner *scanner,
 
     scanner->skip_ws = skip_ws;
     pj_scan_skip_whitespace(scanner);
-    
+
     return url;
 }
 
 /* Parse nameaddr. */
-static pjsip_name_addr *int_parse_name_addr( pj_scanner *scanner, 
+static pjsip_name_addr *int_parse_name_addr( pj_scanner *scanner,
 					     pj_pool_t *pool )
 {
     int has_bracket;
@@ -1606,7 +1613,7 @@ static pjsip_name_addr *int_parse_name_addr( pj_scanner *scanner,
 
 
 /* Parse other URI */
-static void* int_parse_other_uri(pj_scanner *scanner, 
+static void* int_parse_other_uri(pj_scanner *scanner,
 				 pj_pool_t *pool,
 				 pj_bool_t parse_params)
 {
@@ -1617,17 +1624,17 @@ static void* int_parse_other_uri(pj_scanner *scanner,
     PJ_UNUSED_ARG(parse_params);
 
     scanner->skip_ws = 0;
-    
-    uri = pjsip_other_uri_create(pool); 
-    
+
+    uri = pjsip_other_uri_create(pool);
+
     pj_scan_get(scanner, &pc->pjsip_TOKEN_SPEC, &uri->scheme);
     if (pj_scan_get_char(scanner) != ':') {
 	    PJ_THROW(-1);
     }
-    
+
     pj_scan_get(scanner, &pc->pjsip_OTHER_URI_CONTENT, &uri->content);
     scanner->skip_ws = skip_ws;
-    
+
     return uri;
 }
 
@@ -1646,7 +1653,7 @@ static void int_parse_req_line( pj_scanner *scanner, pj_pool_t *pool,
 }
 
 /* Parse status line. */
-static void int_parse_status_line( pj_scanner *scanner, 
+static void int_parse_status_line( pj_scanner *scanner,
 				   pjsip_status_line *status_line)
 {
     pj_str_t token;
@@ -1673,12 +1680,12 @@ PJ_DEF(pj_status_t) pjsip_parse_status_line( char *buf, pj_size_t size,
     PJ_USE_EXCEPTION;
 
     pj_bzero(status_line, sizeof(*status_line));
-    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER, 
+    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER,
 		 &on_syntax_error);
 
     PJ_TRY {
 	int_parse_status_line(&scanner, status_line);
-    } 
+    }
     PJ_CATCH_ANY {
 	/* Tolerate the error if it is caused only by missing newline */
 	if (status_line->code == 0 && status_line->reason.slen == 0) {
@@ -1718,8 +1725,8 @@ static void parse_generic_array_hdr( pjsip_generic_array_hdr *hdr,
     /* Some header fields allow empty elements in the value:
      *   Accept, Allow, Supported
      */
-    if (pj_scan_is_eof(scanner) || 
-	*scanner->curptr == '\r' || *scanner->curptr == '\n') 
+    if (pj_scan_is_eof(scanner) ||
+	*scanner->curptr == '\r' || *scanner->curptr == '\n')
     {
 	goto end;
     }
@@ -1730,7 +1737,7 @@ static void parse_generic_array_hdr( pjsip_generic_array_hdr *hdr,
 	return;
     }
 
-    pj_scan_get( scanner, &pconst.pjsip_NOT_COMMA_OR_NEWLINE, 
+    pj_scan_get( scanner, &pconst.pjsip_NOT_COMMA_OR_NEWLINE,
 		 &hdr->values[hdr->count]);
     hdr->count++;
 
@@ -1738,7 +1745,7 @@ static void parse_generic_array_hdr( pjsip_generic_array_hdr *hdr,
     	   (*scanner->curptr == ','))
     {
 	pj_scan_get_char(scanner);
-	pj_scan_get( scanner, &pconst.pjsip_NOT_COMMA_OR_NEWLINE, 
+	pj_scan_get( scanner, &pconst.pjsip_NOT_COMMA_OR_NEWLINE,
 		     &hdr->values[hdr->count]);
 	hdr->count++;
     }
@@ -1773,7 +1780,7 @@ static void parse_generic_string_hdr( pjsip_generic_string_hdr *hdr,
 	/* mangled, get next fraction */
 	pj_scan_get( scanner, &pconst.pjsip_NOT_NEWLINE, &next);
 	/* concatenate */
-	tmp.ptr = (char*)pj_pool_alloc(ctx->pool, 
+	tmp.ptr = (char*)pj_pool_alloc(ctx->pool,
 				       hdr->hvalue.slen + next.slen + 2);
 	tmp.slen = 0;
 	pj_strcpy(&tmp, &hdr->hvalue);
@@ -1827,7 +1834,7 @@ static pjsip_hdr* parse_hdr_call_id(pjsip_parse_ctx *ctx)
 }
 
 /* Parse and interpret Contact param. */
-static void int_parse_contact_param( pjsip_contact_hdr *hdr, 
+static void int_parse_contact_param( pjsip_contact_hdr *hdr,
 				     pj_scanner *scanner,
 				     pj_pool_t *pool)
 {
@@ -1857,13 +1864,13 @@ static void int_parse_contact_param( pjsip_contact_hdr *hdr,
 		}
 		qval_frac = pj_strtoul_mindigit(&pvalue, 3);
 		if ((unsigned)hdr->q1000 > (PJ_MAXINT32 - qval_frac)) {
-            
+
 		    PJ_THROW(-1);
 		}
 		hdr->q1000 += qval_frac;
-	    }    
-	} else if (!parser_stricmp(pname, pconst.pjsip_EXPIRES_STR) && 
-                   pvalue.slen) 
+	    }
+	} else if (!parser_stricmp(pname, pconst.pjsip_EXPIRES_STR) &&
+                   pvalue.slen)
         {
             hdr->expires = pj_strtoul(&pvalue);
             if (hdr->expires == PJSIP_EXPIRES_NOT_SPECIFIED)
@@ -1886,7 +1893,7 @@ static pjsip_hdr* parse_hdr_contact( pjsip_parse_ctx *ctx )
 {
     pjsip_contact_hdr *first = NULL;
     pj_scanner *scanner = ctx->scanner;
-    
+
     do {
 	pjsip_contact_hdr *hdr = pjsip_contact_hdr_create(ctx->pool);
 	if (first == NULL)
@@ -1900,7 +1907,7 @@ static pjsip_hdr* parse_hdr_contact( pjsip_parse_ctx *ctx )
 
 	} else {
 	    hdr->star = 0;
-	    hdr->uri = int_parse_uri_or_name_addr(scanner, ctx->pool, 
+	    hdr->uri = int_parse_uri_or_name_addr(scanner, ctx->pool,
                                                   PJSIP_PARSE_URI_AS_NAMEADDR |
 						  PJSIP_PARSE_URI_IN_FROM_TO_HDR);
 
@@ -1943,7 +1950,7 @@ static pjsip_hdr* parse_hdr_content_type( pjsip_parse_ctx *ctx )
     pj_scanner *scanner = ctx->scanner;
 
     hdr = pjsip_ctype_hdr_create(ctx->pool);
-    
+
     /* Parse media type and subtype. */
     pj_scan_get(scanner, &pconst.pjsip_TOKEN_SPEC, &hdr->media.type);
     pj_scan_get_char(scanner);
@@ -1997,11 +2004,11 @@ static pjsip_hdr* parse_hdr_expires(pjsip_parse_ctx *ctx)
 }
 
 /* Parse From: or To: header. */
-static void parse_hdr_fromto( pj_scanner *scanner, 
-			      pj_pool_t *pool, 
+static void parse_hdr_fromto( pj_scanner *scanner,
+			      pj_pool_t *pool,
 			      pjsip_from_hdr *hdr)
 {
-    hdr->uri = int_parse_uri_or_name_addr(scanner, pool, 
+    hdr->uri = int_parse_uri_or_name_addr(scanner, pool,
 					  PJSIP_PARSE_URI_AS_NAMEADDR |
 					  PJSIP_PARSE_URI_IN_FROM_TO_HDR);
 
@@ -2012,7 +2019,7 @@ static void parse_hdr_fromto( pj_scanner *scanner,
 
 	if (!parser_stricmp(pname, pconst.pjsip_TAG_STR)) {
 	    hdr->tag = pvalue;
-	    
+
 	} else {
 	    pjsip_param *p = PJ_POOL_ALLOC_T(pool, pjsip_param);
 	    p->name = pname;
@@ -2041,7 +2048,7 @@ static pjsip_hdr* parse_hdr_require( pjsip_parse_ctx *ctx )
     pjsip_require_hdr *hdr;
     pj_bool_t new_hdr = (ctx->rdata==NULL ||
 			 ctx->rdata->msg_info.require == NULL);
-    
+
     if (ctx->rdata && ctx->rdata->msg_info.require) {
 	hdr = ctx->rdata->msg_info.require;
     } else {
@@ -2063,7 +2070,7 @@ static pjsip_hdr* parse_hdr_retry_after(pjsip_parse_ctx *ctx)
     pj_str_t tmp;
 
     hdr = pjsip_retry_after_hdr_create(ctx->pool, 0);
-    
+
     pj_scan_get(scanner, &pconst.pjsip_DIGIT_SPEC, &tmp);
     strtoi_validate(&tmp, PJSIP_MIN_RETRY_AFTER, PJSIP_MAX_RETRY_AFTER,
                     &hdr->ivalue);
@@ -2094,7 +2101,7 @@ static pjsip_hdr* parse_hdr_retry_after(pjsip_parse_ctx *ctx)
 static pjsip_hdr* parse_hdr_supported(pjsip_parse_ctx *ctx)
 {
     pjsip_supported_hdr *hdr;
-    pj_bool_t new_hdr = (ctx->rdata==NULL || 
+    pj_bool_t new_hdr = (ctx->rdata==NULL ||
 		         ctx->rdata->msg_info.supported == NULL);
 
     if (ctx->rdata && ctx->rdata->msg_info.supported) {
@@ -2139,7 +2146,7 @@ static void int_parse_via_param( pjsip_via_hdr *hdr, pj_scanner *scanner,
 	//Parse with PARAM_CHAR instead, to allow IPv6
 	//No, back to using int_parse_param() for the "`" character!
 	//int_parse_param( scanner, pool, &pname, &pvalue, 0);
-	//parse_param_imp(scanner, pool, &pname, &pvalue, 
+	//parse_param_imp(scanner, pool, &pname, &pvalue,
 	//int_parse_param(scanner, pool, &pname, &pvalue, 0);
 	// This should be the correct one:
 	//  added special spec for Via parameter, basically token plus
@@ -2156,7 +2163,7 @@ static void int_parse_via_param( pjsip_via_hdr *hdr, pj_scanner *scanner,
 	} else if (!parser_stricmp(pname, pconst.pjsip_TTL_STR) && pvalue.slen) {
 	    strtoi_validate(&pvalue, PJSIP_MIN_TTL, PJSIP_MAX_TTL,
                             &hdr->ttl_param);
-	    
+
 	} else if (!parser_stricmp(pname, pconst.pjsip_MADDR_STR) && pvalue.slen) {
 	    hdr->maddr_param = pvalue;
 
@@ -2299,7 +2306,7 @@ static pjsip_hdr* parse_hdr_via( pjsip_parse_ctx *ctx )
 	    strtoi_validate(&digit, PJSIP_MIN_PORT, PJSIP_MAX_PORT,
                             &hdr->sent_by.port);
 	}
-	
+
 	int_parse_via_param(hdr, scanner, ctx->pool);
 
 	if (*scanner->curptr == '(') {
@@ -2342,14 +2349,14 @@ PJ_DEF(void*) pjsip_parse_hdr( pj_pool_t *pool, const pj_str_t *hname,
     pjsip_parse_ctx context;
     PJ_USE_EXCEPTION;
 
-    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER, 
+    pj_scan_init(&scanner, buf, size, PJ_SCAN_AUTOSKIP_WS_HEADER,
                  &on_syntax_error);
 
     context.scanner = &scanner;
     context.pool = pool;
     context.rdata = NULL;
 
-    PJ_TRY 
+    PJ_TRY
     {
         pjsip_parse_hdr_func *func = find_handler(hname);
         if (func) {
@@ -2361,7 +2368,7 @@ PJ_DEF(void*) pjsip_parse_hdr( pj_pool_t *pool, const pj_str_t *hname,
             hdr->sname = hdr->name;
         }
 
-    } 
+    }
     PJ_CATCH_ANY {
 	hdr = NULL;
     }
@@ -2408,7 +2415,7 @@ retry_parse:
 	     */
 	    hname.slen = 0;
 
-	    /* Get hname. */            
+	    /* Get hname. */
 	    pj_scan_get( &scanner, &pconst.pjsip_TOKEN_SPEC, &hname);
 	    if (pj_scan_get_char( &scanner ) != ':') {
 		PJ_THROW(-1);
@@ -2456,7 +2463,7 @@ retry_parse:
 	/* Exception was thrown during parsing. */
 	if ((options & STOP_ON_ERROR) == STOP_ON_ERROR) {
 	    pj_scan_fini(&scanner);
-        
+
 	    return PJSIP_EINVALIDHDR;
 	}
 

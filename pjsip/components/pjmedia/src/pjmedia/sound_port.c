@@ -1,5 +1,5 @@
 /* $Id$ */
-/* 
+/*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include <pjmedia/sound_port.h>
 #include <pjmedia/alaw_ulaw.h>
@@ -277,7 +277,7 @@ static pj_status_t start_sound_device( pj_pool_t *pool,
 
     /* Inactivity limit before EC is suspended. */
     snd_port->ec_suspend_limit = AEC_SUSPEND_LIMIT *
-				 (snd_port->clock_rate / 
+				 (snd_port->clock_rate /
 				  snd_port->samples_per_frame);
 
     /* Create software EC if parameter specifies EC and
@@ -295,8 +295,8 @@ static pj_status_t start_sound_device( pj_pool_t *pool,
 	    PJ_LOG(4,(THIS_FILE, "AEC tail is set to default %u ms",
 				 snd_port->aud_param.ec_tail_ms));
 	}
-	    
-	status = pjmedia_snd_port_set_ec(snd_port, pool, 
+
+	status = pjmedia_snd_port_set_ec(snd_port, pool,
 					 snd_port->aud_param.ec_tail_ms,
 					 snd_port->prm_ec_options);
 	if (status != PJ_SUCCESS) {
@@ -438,7 +438,7 @@ PJ_DEF(pj_status_t) pjmedia_snd_port_create2(pj_pool_t *pool,
                            snd_port->clock_rate, ptime_usec);
     pjmedia_clock_src_init(&snd_port->play_clocksrc, PJMEDIA_TYPE_AUDIO,
                            snd_port->clock_rate, ptime_usec);
-    
+
     /* Start sound device immediately.
      * If there's no port connected, the sound callback will return
      * empty signal.
@@ -483,8 +483,12 @@ PJ_DEF(pj_status_t) pjmedia_snd_port_set_ec( pjmedia_snd_port *snd_port,
     pjmedia_aud_param prm;
     pj_status_t status;
 
+    /* Request to disable EC but EC has been disabled */
+    /* Do nothing */
+    return PJ_SUCCESS;  //disable EC
+
     /* Sound must be opened in full-duplex mode */
-    PJ_ASSERT_RETURN(snd_port && 
+    PJ_ASSERT_RETURN(snd_port &&
 		     snd_port->dir == PJMEDIA_DIR_CAPTURE_PLAYBACK,
 		     PJ_EINVALIDOP);
 
@@ -508,7 +512,7 @@ PJ_DEF(pj_status_t) pjmedia_snd_port_set_ec( pjmedia_snd_port *snd_port,
 	    if (!ec_enabled) {
 		/* Enable EC first */
 		pj_bool_t value = PJ_TRUE;
-		status = pjmedia_aud_stream_set_cap(snd_port->aud_stream, 
+		status = pjmedia_aud_stream_set_cap(snd_port->aud_stream,
 						    PJMEDIA_AUD_DEV_CAP_EC,
 						    &value);
 		if (status != PJ_SUCCESS)
@@ -527,7 +531,7 @@ PJ_DEF(pj_status_t) pjmedia_snd_port_set_ec( pjmedia_snd_port *snd_port,
 	} else if (ec_enabled) {
 	    /* Disable EC */
 	    pj_bool_t value = PJ_FALSE;
-	    return pjmedia_aud_stream_set_cap(snd_port->aud_stream, 
+	    return pjmedia_aud_stream_set_cap(snd_port->aud_stream,
 					      PJMEDIA_AUD_DEV_CAP_EC,
 					      &value);
 	} else {
@@ -571,9 +575,9 @@ PJ_DEF(pj_status_t) pjmedia_snd_port_set_ec( pjmedia_snd_port *snd_port,
 	     * possibility of missing/late reference frame.
 	     */
 	    delay_ms = prm.output_latency_ms * 3/4;
-	    status = pjmedia_echo_create2(pool, snd_port->clock_rate, 
+	    status = pjmedia_echo_create2(pool, snd_port->clock_rate,
 					  snd_port->channel_count,
-					  snd_port->samples_per_frame, 
+					  snd_port->samples_per_frame,
 					  tail_ms, delay_ms,
 					  options, &snd_port->ec_state);
 	    if (status != PJ_SUCCESS)
@@ -650,7 +654,7 @@ PJ_DEF(pj_status_t) pjmedia_snd_port_get_ec_stat( pjmedia_snd_port *snd_port,
     }
 }
 
-						  
+
 /*
  * Get clock source.
  */

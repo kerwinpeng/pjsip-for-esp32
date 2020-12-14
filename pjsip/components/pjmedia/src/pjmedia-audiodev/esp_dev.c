@@ -44,7 +44,7 @@
 #define MAX_SOUND_CARDS 		    2
 #define MAX_SOUND_DEVICES_PER_CARD 	2
 #define MAX_DEVICES			        4
-#define MAX_MIX_NAME_LEN            32 
+#define MAX_MIX_NAME_LEN            32
 #define I2S_SAMPLE_RATE             48000
 #define I2S_CHANNELS                2
 #define I2S_BITS                    16
@@ -479,9 +479,9 @@ static pj_status_t open_playback (struct esp_stream* stream,
     audio_pipeline_register(stream->player, filter, "filter");
     audio_pipeline_register(stream->player, i2s_stream_writer, "i2s");
     audio_pipeline_link(stream->player, &link_tag[0], 3);
-    audio_pipeline_run(stream->player);
+    // audio_pipeline_run(stream->player);
 
-    /* Set our buffer with size of stream->pb_frames * 
+    /* Set our buffer with size of stream->pb_frames *
         param->channel_count * (param->bits_per_sample/8)*/
     stream->pb_buf_size = 8000 * 20 / 1000 * 1 * 16 / 8;
     stream->pb_buf = (char*) pj_pool_alloc(stream->pool, stream->pb_buf_size);
@@ -536,11 +536,11 @@ static pj_status_t open_capture (struct esp_stream* stream,
     audio_pipeline_register(stream->recorder, stream->raw_read, "raw");
     const char *link_tag[3] = {"i2s", "filter", "raw"};
     audio_pipeline_link(stream->recorder, &link_tag[0], 3);
-    audio_pipeline_run(stream->recorder);
+    // audio_pipeline_run(stream->recorder);
 
-    /* Set our buffer with size of stream->ca_frames * 
+    /* Set our buffer with size of stream->ca_frames *
         param->channel_count * (param->bits_per_sample/8)*/
-    stream->ca_buf_size = 8000 * 20 / 1000 * 1 * 16 / 8; 
+    stream->ca_buf_size = 8000 * 20 / 1000 * 1 * 16 / 8;
     stream->ca_buf = (char*) pj_pool_alloc(stream->pool, stream->ca_buf_size);
 
     PJ_LOG(4, (THIS_FILE, " SIP recorder has been created"));
@@ -646,8 +646,8 @@ static pj_status_t esp_stream_set_cap(pjmedia_aud_stream *strm,
 {
     struct esp_factory *af = ((struct esp_stream*)strm)->af;
 
-    if (cap==PJMEDIA_AUD_DEV_CAP_OUTPUT_VOLUME_SETTING && 
-	    pj_ansi_strlen(af->pb_mixer_name)) 
+    if (cap==PJMEDIA_AUD_DEV_CAP_OUTPUT_VOLUME_SETTING &&
+	    pj_ansi_strlen(af->pb_mixer_name))
     {
 
 	    unsigned vol = *(unsigned*)value;
@@ -666,6 +666,7 @@ static pj_status_t esp_stream_start (pjmedia_aud_stream *s)
 
     stream->quit = 0;
     if (stream->param.dir & PJMEDIA_DIR_PLAYBACK) {
+        audio_pipeline_run(stream->player);
         status = pj_thread_create (stream->pool,
                     "espsound_playback",
                     pb_thread_func,
@@ -678,6 +679,7 @@ static pj_status_t esp_stream_start (pjmedia_aud_stream *s)
     }
 
     if (stream->param.dir & PJMEDIA_DIR_CAPTURE) {
+        audio_pipeline_run(stream->recorder);
         status = pj_thread_create (stream->pool,
                     "espsound_capture",
                     ca_thread_func,
@@ -711,18 +713,24 @@ static pj_status_t esp_stream_stop (pjmedia_aud_stream *s)
             pj_thread_this()->objname));
         pj_thread_destroy(stream->pb_thread);
         stream->pb_thread = NULL;
+
+        audio_pipeline_stop(stream->player);
+        audio_pipeline_wait_for_stop(stream->player);
     }
 
     if (stream->ca_thread) {
-	TRACE_((THIS_FILE,
-		   "esp_stream_stop(%u): Waiting for capture to stop.",
-		   pj_thread_this()->objname));
-	pj_thread_join (stream->ca_thread);
-	TRACE_((THIS_FILE,
-		   "esp_stream_stop(%u): capture stopped.",
-		   pj_thread_this()->objname));
-	pj_thread_destroy(stream->ca_thread);
-	stream->ca_thread = NULL;
+        TRACE_((THIS_FILE,
+            "esp_stream_stop(%u): Waiting for capture to stop.",
+            pj_thread_this()->objname));
+        pj_thread_join (stream->ca_thread);
+        TRACE_((THIS_FILE,
+            "esp_stream_stop(%u): capture stopped.",
+            pj_thread_this()->objname));
+        pj_thread_destroy(stream->ca_thread);
+        stream->ca_thread = NULL;
+
+        audio_pipeline_stop(stream->recorder);
+        audio_pipeline_wait_for_stop(stream->recorder);
     }
 
     return PJ_SUCCESS;
@@ -736,10 +744,12 @@ static pj_status_t esp_stream_destroy (pjmedia_aud_stream *s)
     if (stream->param.dir & PJMEDIA_DIR_PLAYBACK) {
         // snd_pcm_close (stream->pb_pcm);
         // stream->pb_pcm = NULL;
+        audio_pipeline_deinit(stream->player);
     }
     if (stream->param.dir & PJMEDIA_DIR_CAPTURE) {
         // snd_pcm_close (stream->ca_pcm);
         // stream->ca_pcm = NULL;
+        audio_pipeline_deinit(stream->recorder);
     }
 
     pj_pool_release (stream->pool);

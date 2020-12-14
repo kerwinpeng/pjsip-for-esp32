@@ -33,14 +33,6 @@
 #define PJ_SCAN_IS_PROBABLY_SPACE(c)	((c) <= 32)
 #define PJ_SCAN_CHECK_EOF(s)		(s != scanner->end)
 
-
-#if defined(PJ_SCANNER_USE_BITWISE) && PJ_SCANNER_USE_BITWISE != 0
-#  include "scanner_cis_bitwise.c"
-#else
-#  include "scanner_cis_uint.c"
-#endif
-
-
 static void pj_scan_syntax_err(pj_scanner *scanner)
 {
     (*scanner->callback)(scanner);
@@ -543,7 +535,6 @@ PJ_DEF(void) pj_scan_get_until_ch( pj_scanner *scanner,
     }
 }
 
-
 PJ_DEF(void) pj_scan_get_until_chr( pj_scanner *scanner,
 				     const char *until_spec, pj_str_t *out)
 {
@@ -631,4 +622,46 @@ PJ_DEF(void) pj_scan_restore_state( pj_scanner *scanner,
     scanner->start_line = state->start_line;
 }
 
+PJ_DEF(void) pj_cis_buf_init( pj_cis_buf_t *cis_buf)
+{
+    pj_bzero(cis_buf->cis_buf, sizeof(cis_buf->cis_buf));
+    cis_buf->use_mask = 0;
+}
 
+PJ_DEF(pj_status_t) pj_cis_init(pj_cis_buf_t *cis_buf, pj_cis_t *cis)
+{
+    unsigned i;
+
+    cis->cis_buf = cis_buf->cis_buf;
+
+    for (i=0; i<PJ_CIS_MAX_INDEX; ++i) {
+        if ((cis_buf->use_mask & (1 << i)) == 0) {
+            cis->cis_id = i;
+	    cis_buf->use_mask |= (1 << i);
+            return PJ_SUCCESS;
+        }
+    }
+
+    cis->cis_id = PJ_CIS_MAX_INDEX;
+    return PJ_ETOOMANY;
+}
+
+PJ_DEF(pj_status_t) pj_cis_dup( pj_cis_t *new_cis, pj_cis_t *existing)
+{
+    pj_status_t status;
+    unsigned i;
+
+    /* Warning: typecasting here! */
+    status = pj_cis_init((pj_cis_buf_t*)existing->cis_buf, new_cis);
+    if (status != PJ_SUCCESS)
+        return status;
+
+    for (i=0; i<256; ++i) {
+        if (PJ_CIS_ISSET(existing, i))
+            PJ_CIS_SET(new_cis, i);
+        else
+            PJ_CIS_CLR(new_cis, i);
+    }
+
+    return PJ_SUCCESS;
+}
