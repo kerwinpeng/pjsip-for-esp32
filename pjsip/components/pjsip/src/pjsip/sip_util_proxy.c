@@ -27,7 +27,7 @@
 #include <pj/guid.h>
 #include <pj/pool.h>
 #include <pj/pj_string.h>
-#include <pjlib-util/md5.h>
+#include <pjlib-util/pj_md5.h>
 
 
 /**

@@ -30,7 +30,7 @@
  */
 
 #include <pj/pj_types.h>
-#include <pjlib-util/md5.h>
+#include <pjlib-util/pj_md5.h>
 
 PJ_BEGIN_DECL
 

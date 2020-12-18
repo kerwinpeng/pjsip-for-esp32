@@ -99,7 +99,7 @@ A million repetitions of "a"
 
 #include "sha1.h"
 */
-#include <pjlib-util/sha1.h>
+#include <pjlib-util/pj_sha1.h>
 #include <pj/pj_string.h>
 
 #undef SHA1HANDSOFF

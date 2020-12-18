@@ -34,8 +34,8 @@
 #include <pjlib-util/crc32.h>
 #include <pjlib-util/hmac_md5.h>
 #include <pjlib-util/hmac_sha1.h>
-#include <pjlib-util/md5.h>
-#include <pjlib-util/sha1.h>
+#include <pjlib-util/pj_md5.h>
+#include <pjlib-util/pj_sha1.h>
 
 /* DNS and resolver */
 #include <pjlib-util/util_dns.h>

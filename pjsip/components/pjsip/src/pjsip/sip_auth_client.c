@@ -25,7 +25,7 @@
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_errno.h>
 #include <pjsip/sip_util.h>
-#include <pjlib-util/md5.h>
+#include <pjlib-util/pj_md5.h>
 #include <pj/log.h>
 #include <pj/pj_string.h>
 #include <pj/pool.h>

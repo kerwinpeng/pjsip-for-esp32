@@ -48,7 +48,7 @@
     #include <srtp_config.h>
 #endif
 
-#include "sha1.h"
+#include "crypto_sha1.h"
 
 /* SN == Rotate left N bits */
 #define S1(X)  ((X << 1)  | (X >> 31))

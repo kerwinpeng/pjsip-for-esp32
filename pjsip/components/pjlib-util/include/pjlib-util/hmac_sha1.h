@@ -26,7 +26,7 @@
  */
 
 #include <pj/pj_types.h>
-#include <pjlib-util/sha1.h>
+#include <pjlib-util/pj_sha1.h>
 
 PJ_BEGIN_DECL
 

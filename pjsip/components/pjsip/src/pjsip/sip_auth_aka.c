@@ -20,7 +20,7 @@
 #include <pjsip/sip_auth_aka.h>
 #include <pjsip/sip_errno.h>
 #include <pjlib-util/base64.h>
-#include <pjlib-util/md5.h>
+#include <pjlib-util/pj_md5.h>
 #include <pjlib-util/hmac_md5.h>
 #include <pj/pj_assert.h>
 #include <pj/log.h>

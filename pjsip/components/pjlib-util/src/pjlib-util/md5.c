@@ -3,7 +3,7 @@
  * This is the implementation of MD5 algorithm, based on the code
  * written by Colin Plumb. This file is put in public domain.
  */
-#include <pjlib-util/md5.h>
+#include <pjlib-util/pj_md5.h>
 #include <pj/pj_string.h>		/* pj_memcpy */
 /*
  * This code implements the MD5 message-digest algorithm.
