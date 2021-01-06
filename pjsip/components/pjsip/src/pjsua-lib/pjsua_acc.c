@@ -2365,7 +2365,7 @@ static pj_status_t pjsua_regc_init(int acc_id)
     /* Set credentials
      */
     if (acc->cred_cnt) {
-	pjsip_regc_set_credentials( acc->regc, acc->cred_cnt, acc->cred);
+		pjsip_regc_set_credentials( acc->regc, acc->cred_cnt, acc->cred);
     }
 
     /* Set delay before registration refresh */
@@ -2490,7 +2490,6 @@ PJ_DEF(pj_status_t) pjsua_acc_set_registration( pjsua_acc_id acc_id,
     if (renew) {
 		if (pjsua_var->acc[acc_id].regc == NULL) {
 			status = pjsua_regc_init(acc_id);
-			printf("pjsua_acc_set_registration status=%d 1\n", status);
 			if (status != PJ_SUCCESS) {
 				pjsua_perror(THIS_FILE, "Unable to create registration", 
 						status);
@@ -2516,7 +2515,7 @@ PJ_DEF(pj_status_t) pjsua_acc_set_registration( pjsua_acc_id acc_id,
 			PJ_UNUSED_ARG(d);
 
 			h = pjsip_authorization_hdr_create(tdata->pool);
-			h->scheme = pj_str("Digest");
+			h->scheme = acc->cred[0].scheme;
 			h->credential.digest.username = acc->cred[0].username;
 			h->credential.digest.realm = acc->srv_domain;
 			h->credential.digest.uri = pj_str(uri);

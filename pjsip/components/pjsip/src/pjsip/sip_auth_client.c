@@ -477,20 +477,24 @@ static const pjsip_cred_info* auth_find_cred( const pjsip_auth_clt_sess *sess,
     PJ_UNUSED_ARG(auth_scheme);
 
     for (i=0; i<sess->cred_cnt; ++i) {
-	if (pj_stricmp(&sess->cred_info[i].realm, realm) == 0)
-	    return &sess->cred_info[i];
-	else if (sess->cred_info[i].realm.slen == 1 &&
-		 sess->cred_info[i].realm.ptr[0] == '*')
-	{
-	    wildcard = i;
-	}
+		if (pj_stricmp(&sess->cred_info[i].realm, realm) == 0)
+			return &sess->cred_info[i];
+		else if (sess->cred_info[i].realm.slen == 1 &&
+			sess->cred_info[i].realm.ptr[0] == '*')
+		{
+			wildcard = i;
+		}
+		else
+		{
+			wildcard = i;
+		}
     }
 
     /* No matching realm. See if we have credential with wildcard ('*')
      * as the realm.
      */
     if (wildcard != -1)
-	return &sess->cred_info[wildcard];
+		return &sess->cred_info[wildcard];
 
     /* Nothing is suitable */
     return NULL;
@@ -1123,13 +1127,13 @@ static pj_status_t process_auth( pj_pool_t *req_pool,
     cred = auth_find_cred( sess, &hchal->challenge.common.realm,
 			   &hchal->scheme);
     if (!cred) {
-	const pj_str_t *realm = &hchal->challenge.common.realm;
-	PJ_LOG(4,(THIS_FILE,
-		  "Unable to set auth for %s: can not find credential for %.*s/%.*s",
-		  tdata->obj_name,
-		  realm->slen, realm->ptr,
-		  hchal->scheme.slen, hchal->scheme.ptr));
-	return PJSIP_ENOCREDENTIAL;
+		const pj_str_t *realm = &hchal->challenge.common.realm;
+		PJ_LOG(4,(THIS_FILE,
+			"Unable to set auth for %s: can not find credential for %.*s/%.*s",
+			tdata->obj_name,
+			realm->slen, realm->ptr,
+			hchal->scheme.slen, hchal->scheme.ptr));
+		return PJSIP_ENOCREDENTIAL;
     }
 
     /* Respond to authorization challenge. */
